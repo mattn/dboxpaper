@@ -28,6 +28,24 @@ GLOBAL OPTIONS:
    --version, -v  print the version
 ```
 
+list papers
+
+```
+$ dboxpaper list
+```
+
+cat paper
+
+```
+$ dboxpaper cat XXXXXXXXXXX
+```
+
+upload paper
+
+```
+$ cat README.md | dboxpaper upload
+```
+
 ## Installation
 
 ```
