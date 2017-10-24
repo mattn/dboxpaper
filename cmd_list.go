@@ -12,7 +12,7 @@ func init() {
 	app.Commands = append(app.Commands, cli.Command{
 		Name:    "list",
 		Aliases: []string{"l"},
-		Usage:   "Show paper items",
+		Usage:   "Show papers",
 		Action: func(c *cli.Context) error {
 			dboxpaper := app.Metadata["dboxpaper"].(*DboxPaper)
 			var docslist DocsList

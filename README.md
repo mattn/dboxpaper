@@ -11,14 +11,14 @@ NAME:
    dboxpaper - Dropbox Paper client
 
 USAGE:
-   dboxpaper.exe [global options] command [command options] [arguments...]
+   dboxpaper [global options] command [command options] [arguments...]
 
 VERSION:
    0.0.1
 
 COMMANDS:
-     cat, c   Cat paper items
-     list, l  Show paper items
+     cat, c   Cat paper
+     list, l  Show papers
      help, h  Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:

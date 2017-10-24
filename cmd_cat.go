@@ -15,7 +15,7 @@ func init() {
 	app.Commands = append(app.Commands, cli.Command{
 		Name:    "cat",
 		Aliases: []string{"c"},
-		Usage:   "Cat paper items",
+		Usage:   "Cat paper",
 		Action: func(c *cli.Context) error {
 			dboxpaper := app.Metadata["dboxpaper"].(*DboxPaper)
 			var buf bytes.Buffer
