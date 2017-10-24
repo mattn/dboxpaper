@@ -4,7 +4,7 @@
 
 client for Dropbox Paper
 
-## Uasge
+## Usage
 
 ```
 NAME:
