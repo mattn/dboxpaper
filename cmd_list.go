@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -15,17 +17,45 @@ func init() {
 		Usage:   "Show papers",
 		Action: func(c *cli.Context) error {
 			dboxpaper := app.Metadata["dboxpaper"].(*DboxPaper)
+			var buf bytes.Buffer
+			err := dboxpaper.doAPI(
+				context.Background(),
+				http.MethodPost,
+				"https://api.dropboxapi.com/2/paper/docs/list",
+				&request{
+					out: &buf,
+				})
+			if err != nil {
+				return err
+			}
 			var docslist DocsList
-			err := dboxpaper.doAPI(context.Background(), http.MethodPost, "https://api.dropboxapi.com/2/paper/docs/list", "", &docslist, nil)
+			err = json.NewDecoder(&buf).Decode(&docslist)
 			if err != nil {
 				return err
 			}
 			if c.Bool("l") {
 				for _, item := range docslist.DocIds {
-					var docmeta DocsMeta
-					err = dboxpaper.doAPI(context.Background(), http.MethodPost, "https://api.dropboxapi.com/2/paper/docs/get_metadata", map[string]string{"doc_id": item}, &docmeta, nil)
+					var in bytes.Buffer
+					err = json.NewEncoder(&in).Encode(map[string]interface{}{"doc_id": item})
+					if err != nil {
+						return err
+					}
+					err = dboxpaper.doAPI(
+						context.Background(),
+						http.MethodPost,
+						"https://api.dropboxapi.com/2/paper/docs/get_metadata",
+						&request{
+							ct:  "application/json",
+							in:  &in,
+							out: &buf,
+						})
 					if err != nil {
 						continue
+					}
+					var docmeta DocsMeta
+					err = json.NewDecoder(&buf).Decode(&docmeta)
+					if err != nil {
+						return err
 					}
 					fmt.Println(docmeta.DocID, docmeta.Title)
 				}

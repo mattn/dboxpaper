@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/json"
@@ -65,34 +64,28 @@ type DboxPaper struct {
 	file   string
 }
 
-func (dboxpaper *DboxPaper) doAPI(ctx context.Context, method string, uri string, params interface{}, res interface{}, meta map[string]interface{}) error {
-	var stream io.Reader
-	var args string
-	if params != nil {
-		buf := new(bytes.Buffer)
-		if qargs, ok := params.(string); ok {
-			buf.WriteString("{}")
-			args = qargs
-		} else {
-			err := json.NewEncoder(buf).Encode(params)
-			if err != nil {
-				return err
-			}
-		}
-		stream = buf
-	}
+type request struct {
+	ct   string
+	arg  map[string]interface{}
+	meta map[string]interface{}
+	in   io.Reader
+	out  io.Writer
+}
 
-	req, err := http.NewRequest(method, uri, stream)
+func (dboxpaper *DboxPaper) doAPI(ctx context.Context, method string, uri string, request *request) error {
+	req, err := http.NewRequest(method, uri, request.in)
 	if err != nil {
 		return err
 	}
 	req.WithContext(ctx)
-	if stream != nil {
-		req.Header.Add("Content-Type", "application/json")
-	}
+	req.Header.Add("Content-Type", request.ct)
 	req.Header.Add("Authorization", "Bearer "+dboxpaper.token.AccessToken)
-	if args != "" {
-		req.Header.Add("Dropbox-API-Arg", args)
+	if request.arg != nil {
+		b, err := json.Marshal(request.arg)
+		if err != nil {
+			return err
+		}
+		req.Header.Add("Dropbox-API-Arg", string(b))
 	}
 	client := dboxpaper.config.Client(ctx, dboxpaper.token)
 	resp, err := client.Do(req)
@@ -112,19 +105,19 @@ func (dboxpaper *DboxPaper) doAPI(ctx context.Context, method string, uri string
 		return errors.New(string(b))
 	}
 
-	if meta != nil {
+	if request.meta != nil {
 		apires := resp.Header.Get("Dropbox-Api-Result")
-		err = json.Unmarshal([]byte(apires), meta)
+		err = json.Unmarshal([]byte(apires), request.meta)
 		if err != nil {
 			return err
 		}
 	}
 
-	if res != nil {
-		if w, ok := res.(io.Writer); ok {
+	if request.out != nil {
+		if w, ok := request.out.(io.Writer); ok {
 			_, err = io.Copy(w, resp.Body)
 		} else {
-			err = json.NewDecoder(r).Decode(res)
+			err = json.NewDecoder(r).Decode(request.out)
 		}
 	} else {
 		_, err = io.Copy(ioutil.Discard, r)
