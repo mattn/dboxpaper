@@ -1,5 +1,7 @@
 # dboxpaper
 
+![dboxpaper](https://raw.githubusercontent.com/mattn/dboxpaper/master/dboxpaper-logo256.png)
+
 client for Dropbox Paper
 
 ## Installation
