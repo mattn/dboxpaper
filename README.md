@@ -12,14 +12,15 @@ NAME:
 
 USAGE:
    dboxpaper [global options] command [command options] [arguments...]
-
+   
 VERSION:
    0.0.1
-
+   
 COMMANDS:
-     cat, c   Cat paper
-     list, l  Show papers
-     help, h  Shows a list of commands or help for one command
+     cat         Cat paper
+     list, ls    Show papers
+     upload, up  Upload paper
+     help, h     Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
    --json         output json
