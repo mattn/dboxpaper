@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -20,6 +21,19 @@ import (
 	"github.com/skratchdot/open-golang/open"
 	"github.com/urfave/cli"
 )
+
+type DocsMeta struct {
+	DocID       string    `json:"doc_id"`
+	Owner       string    `json:"owner"`
+	Title       string    `json:"title"`
+	CreatedDate time.Time `json:"created_date"`
+	Status      struct {
+		Tag string `json:".tag"`
+	} `json:"status"`
+	Revision        int       `json:"revision"`
+	LastUpdatedDate time.Time `json:"last_updated_date"`
+	LastEditor      string    `json:"last_editor"`
+}
 
 type DocsList struct {
 	DocIds []string `json:"doc_ids"`
@@ -51,22 +65,21 @@ type DboxPaper struct {
 	file   string
 }
 
-func (dboxpaper *DboxPaper) doAPI(ctx context.Context, method string, uri string, params interface{}, res interface{}) error {
+func (dboxpaper *DboxPaper) doAPI(ctx context.Context, method string, uri string, params interface{}, res interface{}, meta map[string]interface{}) error {
 	var stream io.Reader
 	var args string
 	if params != nil {
+		buf := new(bytes.Buffer)
 		if qargs, ok := params.(string); ok {
-			buf := new(bytes.Buffer)
 			buf.WriteString("{}")
 			args = qargs
 		} else {
-			buf := new(bytes.Buffer)
 			err := json.NewEncoder(buf).Encode(params)
 			if err != nil {
 				return err
 			}
-			stream = buf
 		}
+		stream = buf
 	}
 
 	req, err := http.NewRequest(method, uri, stream)
@@ -74,6 +87,9 @@ func (dboxpaper *DboxPaper) doAPI(ctx context.Context, method string, uri string
 		return err
 	}
 	req.WithContext(ctx)
+	if stream != nil {
+		req.Header.Add("Content-Type", "application/json")
+	}
 	req.Header.Add("Authorization", "Bearer "+dboxpaper.token.AccessToken)
 	if args != "" {
 		req.Header.Add("Dropbox-API-Arg", args)
@@ -85,14 +101,28 @@ func (dboxpaper *DboxPaper) doAPI(ctx context.Context, method string, uri string
 	}
 	defer resp.Body.Close()
 	var r io.Reader = resp.Body
-	//r = io.TeeReader(resp.Body, os.Stdout)
+	if resp.StatusCode >= 400 {
+		b, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return err
+		}
+		if len(b) == 0 {
+			return errors.New(resp.Status)
+		}
+		return errors.New(string(b))
+	}
+
+	if meta != nil {
+		apires := resp.Header.Get("Dropbox-Api-Result")
+		err = json.Unmarshal([]byte(apires), meta)
+		if err != nil {
+			return err
+		}
+	}
 
 	if res != nil {
-		if s, ok := res.(*string); ok {
-			b, err := ioutil.ReadAll(resp.Body)
-			if err == nil {
-				*s = string(b)
-			}
+		if w, ok := res.(io.Writer); ok {
+			_, err = io.Copy(w, resp.Body)
 		} else {
 			err = json.NewDecoder(r).Decode(res)
 		}
