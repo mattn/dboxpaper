@@ -23,14 +23,20 @@ func init() {
 			if err != nil {
 				return err
 			}
+			uri := "https://api.dropboxapi.com/2/paper/docs/create"
+			arg := map[string]interface{}{"import_format": "markdown"}
+			if c.Args().Present() {
+				uri = "https://api.dropboxapi.com/2/paper/docs/update"
+				arg["doc_id"] = c.Args().First()
+			}
 			var meta map[string]interface{}
 			err = dboxpaper.doAPI(
 				context.Background(),
 				http.MethodPost,
-				"https://api.dropboxapi.com/2/paper/docs/create",
+				uri,
 				&request{
 					ct:   "application/octet-stream",
-					arg:  map[string]interface{}{"import_format": "markdown"},
+					arg:  arg,
 					in:   os.Stdin,
 					out:  os.Stdout,
 					meta: meta,
