@@ -49,15 +49,6 @@ var (
 	app = cli.NewApp()
 )
 
-func init() {
-	app.Flags = []cli.Flag{
-		cli.BoolFlag{
-			Name:  "json",
-			Usage: "output json",
-		},
-	}
-}
-
 type DboxPaper struct {
 	token  *oauth2.Token
 	config *oauth2.Config
@@ -236,6 +227,8 @@ func main() {
 	app.Name = "dboxpaper"
 	app.Usage = "Dropbox Paper client"
 	app.Version = "0.0.1"
+	app.Author = "mattn"
+	app.Email = "mattn.jp@gmail.com"
 	app.EnableBashCompletion = true
 	app.Before = initialize
 	app.Setup()
