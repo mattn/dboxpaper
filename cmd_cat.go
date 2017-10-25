@@ -21,7 +21,7 @@ func init() {
 			return dboxpaper.doAPI(
 				context.Background(),
 				http.MethodPost,
-				"https://api.dropboxapi.com/2/paper/docs/download",
+				"/2/paper/docs/download",
 				&request{
 					ct:  "application/octet-stream",
 					arg: map[string]interface{}{"doc_id": c.Args().First(), "export_format": "markdown"},

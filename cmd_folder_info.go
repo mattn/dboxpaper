@@ -29,7 +29,7 @@ func init() {
 			err = dboxpaper.doAPI(
 				context.Background(),
 				http.MethodPost,
-				"https://api.dropboxapi.com/2/paper/docs/get_folder_info",
+				"/2/paper/docs/get_folder_info",
 				&request{
 					ct:  "application/json",
 					in:  &in,

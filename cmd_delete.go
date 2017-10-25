@@ -28,7 +28,7 @@ func init() {
 			return dboxpaper.doAPI(
 				context.Background(),
 				http.MethodPost,
-				"https://api.dropboxapi.com/2/paper/docs/permanently_delete",
+				"/2/paper/docs/permanently_delete",
 				&request{
 					ct: "application/json",
 					in: &in,

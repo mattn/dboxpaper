@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -60,6 +61,7 @@ var (
 )
 
 type DboxPaper struct {
+	uri    *url.URL
 	token  *oauth2.Token
 	config *oauth2.Config
 	file   string
@@ -74,8 +76,9 @@ type request struct {
 	out  io.Writer
 }
 
-func (dboxpaper *DboxPaper) doAPI(ctx context.Context, method string, uri string, request *request) error {
-	req, err := http.NewRequest(method, uri, request.in)
+func (dboxpaper *DboxPaper) doAPI(ctx context.Context, method string, path string, request *request) error {
+	dboxpaper.uri.Path = path
+	req, err := http.NewRequest(method, dboxpaper.uri.String(), request.in)
 	if err != nil {
 		return err
 	}
@@ -234,6 +237,8 @@ func initialize(c *cli.Context) error {
 			return fmt.Errorf("faild to get access token: %v", err)
 		}
 	}
+
+	dboxpaper.uri, _ = url.Parse("https://api.dropboxapi.com")
 
 	dboxpaper.debug = os.Getenv("DBOXPAPER_DEBUG") != ""
 	app.Metadata["dboxpaper"] = dboxpaper

@@ -33,7 +33,7 @@ func init() {
 				err = dboxpaper.doAPI(
 					context.Background(),
 					http.MethodPost,
-					"https://api.dropboxapi.com/2/paper/docs/get_metadata",
+					"/2/paper/docs/get_metadata",
 					&request{
 						ct:  "application/json",
 						in:  &in,
@@ -67,7 +67,7 @@ func listDocs(c *cli.Context) ([]string, error) {
 	err := dboxpaper.doAPI(
 		context.Background(),
 		http.MethodPost,
-		"https://api.dropboxapi.com/2/paper/docs/list",
+		"/2/paper/docs/list",
 		&request{
 			out: &buf,
 		})
