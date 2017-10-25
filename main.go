@@ -234,6 +234,7 @@ func main() {
 	app.Name = "dboxpaper"
 	app.Usage = "Dropbox Paper client"
 	app.Version = "0.0.1"
+	app.EnableBashCompletion = true
 	app.Before = initialize
 	app.Setup()
 	app.Run(os.Args)

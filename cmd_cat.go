@@ -30,5 +30,6 @@ func init() {
 				})
 		},
 	}
+	command.BashComplete = docIdCompletion
 	app.Commands = append(app.Commands, command)
 }
