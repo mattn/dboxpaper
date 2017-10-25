@@ -47,7 +47,7 @@ func init() {
 				if err != nil {
 					return err
 				}
-				fmt.Println(docmeta.DocID, docmeta.Title)
+				fmt.Fprintf(c.App.Writer, "%s %s\n", docmeta.DocID, docmeta.Title)
 			}
 			return nil
 		},

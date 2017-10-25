@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"net/http"
-	"os"
 
 	"github.com/urfave/cli"
 )
@@ -26,7 +25,7 @@ func init() {
 				&request{
 					ct:  "application/octet-stream",
 					arg: map[string]interface{}{"doc_id": c.Args().First(), "export_format": "markdown"},
-					out: os.Stdout,
+					out: c.App.Writer,
 				})
 		},
 	}

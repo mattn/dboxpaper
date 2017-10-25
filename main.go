@@ -168,7 +168,9 @@ func (dboxpaper *DboxPaper) AccessToken() error {
 
 	state := fmt.Sprintf("%x", stateBytes)
 
-	err = open.Start(dboxpaper.config.AuthCodeURL(state, oauth2.SetAuthURLParam("response_type", "code")))
+	uri := dboxpaper.config.AuthCodeURL(state, oauth2.SetAuthURLParam("response_type", "code"))
+	fmt.Fprintf(os.Stderr, "opening browser: %s\n", uri)
+	err = open.Start(uri)
 	if err != nil {
 		return err
 	}

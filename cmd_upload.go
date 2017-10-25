@@ -44,7 +44,7 @@ func init() {
 			if err != nil {
 				return err
 			}
-			fmt.Println(meta["doc_id"])
+			fmt.Fprintln(c.App.Writer, meta["doc_id"])
 			return nil
 		},
 	}
