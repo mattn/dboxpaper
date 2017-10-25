@@ -43,6 +43,16 @@ type DocsList struct {
 	HasMore bool `json:"has_more"`
 }
 
+type FolderInfo struct {
+	FolderSharingPolicyType struct {
+		Tag string `json:".tag"`
+	} `json:"folder_sharing_policy_type"`
+	Folders []struct {
+		ID   string `json:"id"`
+		Name string `json:"name"`
+	} `json:"folders"`
+}
+
 type config map[string]string
 
 var (
@@ -53,6 +63,7 @@ type DboxPaper struct {
 	token  *oauth2.Token
 	config *oauth2.Config
 	file   string
+	debug  bool
 }
 
 type request struct {
@@ -85,8 +96,13 @@ func (dboxpaper *DboxPaper) doAPI(ctx context.Context, method string, uri string
 	}
 	defer resp.Body.Close()
 	var r io.Reader = resp.Body
+
+	if dboxpaper.debug {
+		r = io.TeeReader(r, os.Stderr)
+	}
+
 	if resp.StatusCode >= 400 {
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := ioutil.ReadAll(r)
 		if err != nil {
 			return err
 		}
@@ -106,7 +122,7 @@ func (dboxpaper *DboxPaper) doAPI(ctx context.Context, method string, uri string
 
 	if request.out != nil {
 		if w, ok := request.out.(io.Writer); ok {
-			_, err = io.Copy(w, resp.Body)
+			_, err = io.Copy(w, r)
 		} else {
 			err = json.NewDecoder(r).Decode(request.out)
 		}
@@ -219,6 +235,7 @@ func initialize(c *cli.Context) error {
 		}
 	}
 
+	dboxpaper.debug = os.Getenv("DBOXPAPER_DEBUG") != ""
 	app.Metadata["dboxpaper"] = dboxpaper
 	return nil
 }
