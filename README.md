@@ -16,14 +16,17 @@ USAGE:
 VERSION:
    0.0.1
    
+AUTHOR(S):
+   mattn <mattn.jp@gmail.com> 
+   
 COMMANDS:
      cat         Cat paper
+     delete      Delete paper permanently
      list, ls    Show papers
      upload, up  Upload paper
      help, h     Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
-   --json         output json
    --help, -h     show help
    --version, -v  print the version
 ```
@@ -44,6 +47,18 @@ upload paper
 
 ```
 $ cat README.md | dboxpaper upload
+```
+
+update paper
+
+```
+$ cat README.md | dboxpaper upload XXXXXXXXXXX
+```
+
+delete paper
+
+```
+$ dboxpaper delete XXXXXXXXXXX
 ```
 
 ## Installation
