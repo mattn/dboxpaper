@@ -28,6 +28,7 @@ func init() {
 			if c.Args().Present() {
 				path = "/2/paper/docs/update"
 				arg["doc_id"] = c.Args().First()
+				arg["doc_update_policy"] = "overwrite_all"
 			}
 			var meta map[string]interface{}
 			err = dboxpaper.doAPI(
