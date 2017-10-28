@@ -22,6 +22,7 @@ import (
 	"github.com/urfave/cli"
 )
 
+// DocsMeta is struct for dropbox paper API
 type DocsMeta struct {
 	DocID       string    `json:"doc_id"`
 	Owner       string    `json:"owner"`
@@ -35,6 +36,7 @@ type DocsMeta struct {
 	LastEditor      string    `json:"last_editor"`
 }
 
+// DocsList is struct for dropbox paper API
 type DocsList struct {
 	DocIds []string `json:"doc_ids"`
 	Cursor struct {
@@ -44,6 +46,7 @@ type DocsList struct {
 	HasMore bool `json:"has_more"`
 }
 
+// FolderInfo is struct for dropbox paper API
 type FolderInfo struct {
 	FolderSharingPolicyType struct {
 		Tag string `json:".tag"`
@@ -60,6 +63,7 @@ var (
 	app = cli.NewApp()
 )
 
+// DboxPaper is application for dboxpaper
 type DboxPaper struct {
 	uri    *url.URL
 	token  *oauth2.Token
@@ -142,6 +146,7 @@ func (dboxpaper *DboxPaper) doAPI(ctx context.Context, method string, path strin
 	return err
 }
 
+// Setup is API to setup application
 func (dboxpaper *DboxPaper) Setup() error {
 	dir := os.Getenv("HOME")
 	if dir == "" && runtime.GOOS == "windows" {
@@ -170,6 +175,7 @@ func (dboxpaper *DboxPaper) Setup() error {
 	return nil
 }
 
+// AccessToken is API to get access token
 func (dboxpaper *DboxPaper) AccessToken() error {
 	l, err := net.Listen("tcp", "localhost:8989")
 	if err != nil {

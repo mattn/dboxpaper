@@ -115,7 +115,7 @@ func listDocs(c *cli.Context) ([]string, error) {
 	return docslist.DocIds, nil
 }
 
-func docIdCompletion(c *cli.Context) {
+func docIDCompletion(c *cli.Context) {
 	docIds, err := listDocs(c)
 	if err != nil {
 		return
