@@ -1,5 +1,8 @@
 # dboxpaper
 
+[![Build Status](https://travis-ci.org/mattn/dboxpaper.png?branch=master)](https://travis-ci.org/mattn/dboxpaper)
+[![Go Report Card](https://goreportcard.com/badge/github.com/mattn/dboxpaper)](https://goreportcard.com/report/github.com/mattn/dboxpaper)
+
 ![dboxpaper](https://raw.githubusercontent.com/mattn/dboxpaper/master/dboxpaper-logo256.png)
 
 client for Dropbox Paper
