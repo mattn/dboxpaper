@@ -63,6 +63,7 @@ func TestCmdUploadUpdate(t *testing.T) {
 					t.Fatal("bad request")
 				}
 				fmt.Fprintln(w, `{"doc_id":"xxx","revision":123}`)
+				return
 			case "/2/paper/docs/update":
 				h := r.Header.Get("Dropbox-API-Arg")
 				var v map[string]interface{}
