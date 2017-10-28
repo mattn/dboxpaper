@@ -249,6 +249,7 @@ func initialize(c *cli.Context) error {
 
 	dboxpaper.debug = os.Getenv("DBOXPAPER_DEBUG") != ""
 	app.Metadata["dboxpaper"] = dboxpaper
+	app.Metadata["stdin"] = os.Stdin
 	return nil
 }
 

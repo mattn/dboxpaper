@@ -5,8 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
-	"os"
 
 	"github.com/urfave/cli"
 )
@@ -17,6 +17,7 @@ func init() {
 		Aliases: []string{"up"},
 		Usage:   "Upload paper",
 		Action: func(c *cli.Context) error {
+			stdin := app.Metadata["stdin"].(io.Reader)
 			dboxpaper := app.Metadata["dboxpaper"].(*DboxPaper)
 			var buf bytes.Buffer
 			err := json.NewEncoder(&buf).Encode(map[string]string{"doc_id": c.Args().First(), "export_format": "markdown"})
@@ -54,22 +55,26 @@ func init() {
 				arg["doc_update_policy"] = "overwrite_all"
 				arg["revision"] = docmeta.Revision
 			}
-			var meta map[string]interface{}
+			var out bytes.Buffer
 			err = dboxpaper.doAPI(
 				context.Background(),
 				http.MethodPost,
 				path,
 				&request{
-					ct:   "application/octet-stream",
-					arg:  arg,
-					in:   os.Stdin,
-					out:  os.Stdout,
-					meta: meta,
+					ct:  "application/octet-stream",
+					arg: arg,
+					in:  stdin,
+					out: &out,
 				})
 			if err != nil {
 				return err
 			}
-			fmt.Fprintln(c.App.Writer, meta["doc_id"])
+			var docmeta DocsMeta
+			err = json.NewDecoder(&out).Decode(&docmeta)
+			if err != nil {
+				return err
+			}
+			fmt.Fprintln(c.App.Writer, docmeta.DocID)
 			return nil
 		},
 	}
