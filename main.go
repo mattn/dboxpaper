@@ -84,7 +84,9 @@ func (dboxpaper *DboxPaper) doAPI(ctx context.Context, method string, path strin
 	}
 	req.WithContext(ctx)
 	req.Header.Add("Content-Type", request.ct)
-	req.Header.Add("Authorization", "Bearer "+dboxpaper.token.AccessToken)
+	if dboxpaper.token != nil {
+		req.Header.Add("Authorization", "Bearer "+dboxpaper.token.AccessToken)
+	}
 	if request.arg != nil {
 		b, err := json.Marshal(request.arg)
 		if err != nil {
@@ -92,7 +94,12 @@ func (dboxpaper *DboxPaper) doAPI(ctx context.Context, method string, path strin
 		}
 		req.Header.Add("Dropbox-API-Arg", string(b))
 	}
-	client := dboxpaper.config.Client(ctx, dboxpaper.token)
+	var client *http.Client
+	if dboxpaper.token == nil {
+		client = http.DefaultClient
+	} else {
+		client = dboxpaper.config.Client(ctx, dboxpaper.token)
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return err
