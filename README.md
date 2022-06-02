@@ -1,6 +1,6 @@
 # dboxpaper
 
-[![Build Status](https://travis-ci.org/mattn/dboxpaper.png?branch=master)](https://travis-ci.org/mattn/dboxpaper)
+[![Test Status](https://github.com/mattn/dboxpaper/workflows/test/badge.svg?branch=master)](https://github.com/mattn/dboxpaper/actions?workflow=test)
 [![Go Report Card](https://goreportcard.com/badge/github.com/mattn/dboxpaper)](https://goreportcard.com/report/github.com/mattn/dboxpaper)
 
 ![dboxpaper](https://raw.githubusercontent.com/mattn/dboxpaper/master/dboxpaper-logo256.png)
@@ -67,7 +67,7 @@ $ dboxpaper delete XXXXXXXXXXX
 ## Installation
 
 ```
-$ go get github.com/mattn/dboxpaper
+$ go install github.com/mattn/dboxpaper@latest
 ```
 
 ## License
