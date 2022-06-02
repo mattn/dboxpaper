@@ -67,7 +67,7 @@ $ dboxpaper delete XXXXXXXXXXX
 ## Installation
 
 ```
-$ go get github.com/mattn/dboxpaper
+$ go install github.com/mattn/dboxpaper@latest
 ```
 
 ## License
