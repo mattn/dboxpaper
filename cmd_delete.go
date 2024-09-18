@@ -6,11 +6,11 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 )
 
 func init() {
-	command := cli.Command{
+	command := &cli.Command{
 		Name:    "delete",
 		Aliases: []string{},
 		Usage:   "Delete paper permanently",

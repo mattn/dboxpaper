@@ -19,7 +19,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/skratchdot/open-golang/open"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 )
 
 // DocsMeta is struct for dropbox paper API
@@ -263,8 +263,12 @@ func main() {
 	app.Name = "dboxpaper"
 	app.Usage = "Dropbox Paper client"
 	app.Version = "0.0.1"
-	app.Author = "mattn"
-	app.Email = "mattn.jp@gmail.com"
+	app.Authors = []*cli.Author{
+		{
+			Name:  "mattn",
+			Email: "mattn.jp@gmail.com",
+		},
+	}
 	app.EnableBashCompletion = true
 	app.Before = initialize
 	app.Setup()

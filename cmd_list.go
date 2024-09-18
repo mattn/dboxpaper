@@ -8,11 +8,11 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 )
 
 func init() {
-	command := cli.Command{
+	command := &cli.Command{
 		Name:    "list",
 		Aliases: []string{"ls"},
 		Usage:   "Show papers",
@@ -82,11 +82,11 @@ func init() {
 		},
 	}
 	command.Flags = []cli.Flag{
-		cli.BoolFlag{
+		&cli.BoolFlag{
 			Name:  "title",
 			Usage: "show title",
 		},
-		cli.BoolFlag{
+		&cli.BoolFlag{
 			Name:  "json",
 			Usage: "show as JSON",
 		},

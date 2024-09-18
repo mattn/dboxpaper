@@ -4,11 +4,11 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 )
 
 func init() {
-	command := cli.Command{
+	command := &cli.Command{
 		Name:    "cat",
 		Aliases: []string{},
 		Usage:   "Cat paper",

@@ -7,11 +7,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 )
 
 func init() {
-	command := cli.Command{
+	command := &cli.Command{
 		Name:    "folder_info",
 		Aliases: []string{},
 		Usage:   "Show folder information for the paper",

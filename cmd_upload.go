@@ -8,11 +8,11 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 )
 
 func init() {
-	command := cli.Command{
+	command := &cli.Command{
 		Name:    "upload",
 		Aliases: []string{"up"},
 		Usage:   "Upload paper",
