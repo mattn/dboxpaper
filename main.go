@@ -22,6 +22,12 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+const name = "dboxpaper"
+
+const version = "0.0.1"
+
+var revision = "HEAD"
+
 // DocsMeta is struct for dropbox paper API
 type DocsMeta struct {
 	DocID       string    `json:"doc_id"`
@@ -262,7 +268,7 @@ func initialize(c *cli.Context) error {
 func main() {
 	app.Name = "dboxpaper"
 	app.Usage = "Dropbox Paper client"
-	app.Version = "0.0.1"
+	app.Version = version
 	app.Authors = []*cli.Author{
 		{
 			Name:  "mattn",
