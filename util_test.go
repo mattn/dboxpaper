@@ -20,7 +20,8 @@ func testWithServer(h http.HandlerFunc, testFuncs ...func(*cli.App)) string {
 	var buf bytes.Buffer
 	app.Metadata = map[string]interface{}{
 		"dboxpaper": &DboxPaper{
-			uri: uri,
+			uri:        uri,
+			contentURI: uri,
 		},
 	}
 	app.Writer = &buf

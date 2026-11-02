@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/urfave/cli/v2"
@@ -9,13 +10,17 @@ import (
 
 func init() {
 	command := &cli.Command{
-		Name:    "folder_info",
-		Aliases: []string{},
-		Usage:   "Show folder information for the paper",
+		Name:      "folder_info",
+		Aliases:   []string{},
+		Usage:     "Show folder information for the paper",
+		ArgsUsage: "<doc_id>",
 		Action: func(c *cli.Context) error {
 			if !c.Args().Present() {
 				cli.ShowCommandHelp(c, "folder_info")
 				return nil
+			}
+			if isFilePath(c.Args().First()) {
+				return errors.New("folder_info is not supported for .paper files")
 			}
 			dboxpaper := app.Metadata["dboxpaper"].(*DboxPaper)
 			var folderinfo FolderInfo

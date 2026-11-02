@@ -16,6 +16,9 @@ func TestCmdList(t *testing.T) {
 	got := testWithServer(
 		func(w http.ResponseWriter, r *http.Request) {
 			switch r.URL.Path {
+			case "/2/users/features/get_values":
+				fmt.Fprintln(w, `{"values":[{".tag":"paper_as_files","paper_as_files":{".tag":"enabled","enabled":false}}]}`)
+				return
 			case "/2/paper/docs/list":
 				fmt.Fprintln(w, `{"doc_ids":["xxx","yyy"]}`)
 				return
@@ -38,6 +41,9 @@ func TestCmdList(t *testing.T) {
 func listTestHandler(t *testing.T) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
+		case "/2/users/features/get_values":
+			fmt.Fprintln(w, `{"values":[{".tag":"paper_as_files","paper_as_files":{".tag":"enabled","enabled":false}}]}`)
+			return
 		case "/2/paper/docs/list":
 			fmt.Fprintln(w, `{"doc_ids":["xxx"],"cursor":{"value":"c1"},"has_more":true}`)
 			return

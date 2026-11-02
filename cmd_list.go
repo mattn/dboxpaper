@@ -17,6 +17,9 @@ func init() {
 		Usage:   "Show papers",
 		Action: func(c *cli.Context) error {
 			dboxpaper := app.Metadata["dboxpaper"].(*DboxPaper)
+			if useFiles(c) {
+				return listFiles(c)
+			}
 			docIds, err := listDocs(c)
 			if err != nil {
 				return err
@@ -55,6 +58,10 @@ func init() {
 		&cli.BoolFlag{
 			Name:  "json",
 			Usage: "show as JSON",
+		},
+		&cli.BoolFlag{
+			Name:  "files",
+			Usage: "show .paper files even if the account is not migrated to Paper as files",
 		},
 	}
 	app.Commands = append(app.Commands, command)
@@ -114,9 +121,58 @@ func listDocs(c *cli.Context) ([]string, error) {
 	}
 }
 
+// useFiles reports whether list should show .paper files instead of legacy docs.
+func useFiles(c *cli.Context) bool {
+	if c.Bool("files") {
+		return true
+	}
+	dboxpaper := app.Metadata["dboxpaper"].(*DboxPaper)
+	enabled, err := dboxpaper.paperAsFiles(context.Background())
+	if err != nil {
+		fmt.Fprintf(c.App.ErrWriter, "failed to check Paper as files, fall back to Paper API: %v\n", err)
+		return false
+	}
+	return enabled
+}
+
+func listFiles(c *cli.Context) error {
+	dboxpaper := app.Metadata["dboxpaper"].(*DboxPaper)
+	files, raws, err := dboxpaper.listPaperFiles(context.Background())
+	if err != nil {
+		return err
+	}
+	switch {
+	case c.Bool("json"):
+		if raws == nil {
+			raws = []json.RawMessage{}
+		}
+		return json.NewEncoder(c.App.Writer).Encode(raws)
+	case c.Bool("title"):
+		for _, f := range files {
+			fmt.Fprintf(c.App.Writer, "%s %s\n", f.PathDisplay, f.Title())
+		}
+	default:
+		for _, f := range files {
+			fmt.Fprintln(c.App.Writer, f.PathDisplay)
+		}
+	}
+	return nil
+}
+
 func docIDCompletion(c *cli.Context) {
+	dboxpaper := app.Metadata["dboxpaper"].(*DboxPaper)
 	// Do not start the OAuth flow from shell completion.
-	if app.Metadata["dboxpaper"].(*DboxPaper).needsLogin() {
+	if dboxpaper.needsLogin() {
+		return
+	}
+	if enabled, err := dboxpaper.paperAsFiles(context.Background()); err == nil && enabled {
+		files, _, err := dboxpaper.listPaperFiles(context.Background())
+		if err != nil {
+			return
+		}
+		for _, f := range files {
+			fmt.Fprintln(c.App.Writer, f.PathDisplay)
+		}
 		return
 	}
 	docIds, err := listDocs(c)
