@@ -11,21 +11,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@master
+      uses: actions/checkout@v5
     - name: Setup Go
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v6
       with:
         go-version: 1.x
     - name: Cross build
       run: make cross
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@master
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
     - name: Upload
       run: make upload
       env:
