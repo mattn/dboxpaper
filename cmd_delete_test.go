@@ -16,10 +16,14 @@ func TestCmdDelete(t *testing.T) {
 				var v map[string]interface{}
 				err := json.NewDecoder(r.Body).Decode(&v)
 				if err != nil {
-					t.Fatal(err)
+					t.Error(err)
+					http.Error(w, "bad request", http.StatusBadRequest)
+					return
 				}
 				if v["doc_id"] != "xxx" {
-					t.Fatal("bad request")
+					t.Error("bad request")
+					http.Error(w, "bad request", http.StatusBadRequest)
+					return
 				}
 				return
 			}
@@ -27,7 +31,9 @@ func TestCmdDelete(t *testing.T) {
 			return
 		},
 		func(app *cli.App) {
-			app.Run([]string{"dboxpaper", "delete", "xxx"})
+			if err := app.Run([]string{"dboxpaper", "delete", "xxx"}); err != nil {
+				t.Error(err)
+			}
 		},
 	)
 	if got != "" {

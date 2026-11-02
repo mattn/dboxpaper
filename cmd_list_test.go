@@ -24,7 +24,9 @@ func TestCmdList(t *testing.T) {
 			return
 		},
 		func(app *cli.App) {
-			app.Run([]string{"dboxpaper", "ls"})
+			if err := app.Run([]string{"dboxpaper", "ls"}); err != nil {
+				t.Error(err)
+			}
 		},
 	)
 	want := "xxx\nyyy\n"

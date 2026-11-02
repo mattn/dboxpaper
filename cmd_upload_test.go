@@ -20,17 +20,25 @@ func TestCmdUploadCreate(t *testing.T) {
 				var v map[string]interface{}
 				err := json.NewDecoder(strings.NewReader(h)).Decode(&v)
 				if err != nil {
-					t.Fatal(err)
+					t.Error(err)
+					http.Error(w, "bad request", http.StatusBadRequest)
+					return
 				}
 				if _, ok := v["doc_id"]; ok {
-					t.Fatal("bad request")
+					t.Error("bad request")
+					http.Error(w, "bad request", http.StatusBadRequest)
+					return
 				}
 				b, err := io.ReadAll(r.Body)
 				if err != nil {
-					t.Fatal(err)
+					t.Error(err)
+					http.Error(w, "bad request", http.StatusBadRequest)
+					return
 				}
 				if string(b) != "hello world" {
-					t.Fatal("bad request")
+					t.Error("bad request")
+					http.Error(w, "bad request", http.StatusBadRequest)
+					return
 				}
 				fmt.Fprintln(w, `{"doc_id":"xxx"}`)
 				return
@@ -40,7 +48,9 @@ func TestCmdUploadCreate(t *testing.T) {
 		},
 		func(app *cli.App) {
 			app.Metadata["stdin"] = strings.NewReader("hello world")
-			app.Run([]string{"dboxpaper", "upload"})
+			if err := app.Run([]string{"dboxpaper", "upload"}); err != nil {
+				t.Error(err)
+			}
 		},
 	)
 	want := "xxx\n"
@@ -57,10 +67,14 @@ func TestCmdUploadUpdate(t *testing.T) {
 				var v map[string]interface{}
 				err := json.NewDecoder(r.Body).Decode(&v)
 				if err != nil {
-					t.Fatal(err)
+					t.Error(err)
+					http.Error(w, "bad request", http.StatusBadRequest)
+					return
 				}
-				if v["doc_id"].(string) != "xxx" {
-					t.Fatal("bad request")
+				if v["doc_id"] != "xxx" {
+					t.Error("bad request")
+					http.Error(w, "bad request", http.StatusBadRequest)
+					return
 				}
 				fmt.Fprintln(w, `{"doc_id":"xxx","revision":123}`)
 				return
@@ -69,20 +83,30 @@ func TestCmdUploadUpdate(t *testing.T) {
 				var v map[string]interface{}
 				err := json.NewDecoder(strings.NewReader(h)).Decode(&v)
 				if err != nil {
-					t.Fatal(err)
+					t.Error(err)
+					http.Error(w, "bad request", http.StatusBadRequest)
+					return
 				}
-				if v["doc_id"].(string) != "xxx" {
-					t.Fatal("bad request")
+				if v["doc_id"] != "xxx" {
+					t.Error("bad request")
+					http.Error(w, "bad request", http.StatusBadRequest)
+					return
 				}
-				if int64(v["revision"].(float64)) != 123 {
-					t.Fatal("bad request")
+				if v["revision"] != float64(123) {
+					t.Error("bad request")
+					http.Error(w, "bad request", http.StatusBadRequest)
+					return
 				}
 				b, err := io.ReadAll(r.Body)
 				if err != nil {
-					t.Fatal(err)
+					t.Error(err)
+					http.Error(w, "bad request", http.StatusBadRequest)
+					return
 				}
 				if string(b) != "good morning" {
-					t.Fatal("bad request")
+					t.Error("bad request")
+					http.Error(w, "bad request", http.StatusBadRequest)
+					return
 				}
 				fmt.Fprintln(w, `{"doc_id":"xxx"}`)
 				return
@@ -92,7 +116,9 @@ func TestCmdUploadUpdate(t *testing.T) {
 		},
 		func(app *cli.App) {
 			app.Metadata["stdin"] = strings.NewReader("good morning")
-			app.Run([]string{"dboxpaper", "upload", "xxx"})
+			if err := app.Run([]string{"dboxpaper", "upload", "xxx"}); err != nil {
+				t.Error(err)
+			}
 		},
 	)
 	want := "xxx\n"
