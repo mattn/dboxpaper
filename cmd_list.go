@@ -122,6 +122,10 @@ func listDocs(c *cli.Context) ([]string, error) {
 }
 
 func docIDCompletion(c *cli.Context) {
+	// Do not start the OAuth flow from shell completion.
+	if app.Metadata["dboxpaper"].(*DboxPaper).needsLogin() {
+		return
+	}
 	docIds, err := listDocs(c)
 	if err != nil {
 		return
