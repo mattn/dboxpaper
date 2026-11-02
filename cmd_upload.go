@@ -13,12 +13,21 @@ import (
 
 func init() {
 	command := &cli.Command{
-		Name:    "upload",
-		Aliases: []string{"up"},
-		Usage:   "Upload paper",
+		Name:      "upload",
+		Aliases:   []string{"up"},
+		Usage:     "Upload paper",
+		ArgsUsage: "[doc_id or /path/to/file.paper]",
 		Action: func(c *cli.Context) error {
 			stdin := app.Metadata["stdin"].(io.Reader)
 			dboxpaper := app.Metadata["dboxpaper"].(*DboxPaper)
+			if isFilePath(c.Args().First()) {
+				path, err := dboxpaper.uploadPaperFile(context.Background(), c.Args().First(), stdin)
+				if err != nil {
+					return err
+				}
+				fmt.Fprintln(c.App.Writer, path)
+				return nil
+			}
 			path := "/2/paper/docs/create"
 			arg := map[string]interface{}{"import_format": "markdown"}
 			if c.Args().Present() {

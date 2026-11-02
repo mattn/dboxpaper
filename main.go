@@ -70,18 +70,20 @@ var (
 
 // DboxPaper is application for dboxpaper
 type DboxPaper struct {
-	uri    *url.URL
-	token  *oauth2.Token
-	config *oauth2.Config
-	file   string
-	debug  bool
+	uri        *url.URL
+	contentURI *url.URL
+	token      *oauth2.Token
+	config     *oauth2.Config
+	file       string
+	debug      bool
 }
 
 type request struct {
-	ct  string
-	arg map[string]interface{}
-	in  io.Reader
-	out io.Writer
+	content bool // use content endpoint
+	ct      string
+	arg     map[string]interface{}
+	in      io.Reader
+	out     io.Writer
 }
 
 // apiArg encodes v as JSON for the Dropbox-API-Arg header. HTTP headers must be
@@ -109,6 +111,9 @@ func (dboxpaper *DboxPaper) doAPI(ctx context.Context, method string, path strin
 		return err
 	}
 	u := *dboxpaper.uri
+	if request.content {
+		u = *dboxpaper.contentURI
+	}
 	u.Path = path
 	req, err := http.NewRequestWithContext(ctx, method, u.String(), request.in)
 	if err != nil {
@@ -345,6 +350,7 @@ func initialize(c *cli.Context) error {
 	}
 
 	dboxpaper.uri, _ = url.Parse("https://api.dropboxapi.com")
+	dboxpaper.contentURI, _ = url.Parse("https://content.dropboxapi.com")
 
 	dboxpaper.debug = os.Getenv("DBOXPAPER_DEBUG") != ""
 	app.Metadata["dboxpaper"] = dboxpaper

@@ -10,57 +10,50 @@ client for Dropbox Paper
 ## Usage
 
 ```
-NAME:
-   dboxpaper - Dropbox Paper client
-
-USAGE:
-   dboxpaper [global options] command [command options] [arguments...]
-   
-VERSION:
-   0.0.1
-   
-AUTHOR(S):
-   mattn <mattn.jp@gmail.com> 
-   
-COMMANDS:
-     cat         Cat paper
-     delete      Delete paper permanently
-     list, ls    Show papers
-     upload, up  Upload paper
-     help, h     Shows a list of commands or help for one command
-
-GLOBAL OPTIONS:
-   --help, -h     show help
-   --version, -v  print the version
+$ dboxpaper help
 ```
+
+Dropbox has migrated Paper docs to `.paper` files stored in Dropbox ("Paper as
+files"). For such accounts, `list` shows the paths of `.paper` files, and the
+other commands accept a path (starting with `/`) or a file ID (starting with
+`id:`) instead of a doc ID. Docs of accounts not migrated yet are handled with
+doc IDs as before.
 
 list papers
 
 ```
 $ dboxpaper list
+/Migrated Paper Docs/memo.paper
+/todo.paper
 ```
+
+Use `--title` to show titles, `--json` to show metadata as JSON, and `--files`
+to list `.paper` files even if the account is not detected as migrated.
 
 cat paper
 
 ```
+$ dboxpaper cat /todo.paper
 $ dboxpaper cat XXXXXXXXXXX
 ```
 
-upload paper
+upload paper (creates the file if it does not exist, otherwise overwrites it)
+
+```
+$ cat README.md | dboxpaper upload /README.paper
+```
+
+upload paper as a legacy doc / update a legacy doc
 
 ```
 $ cat README.md | dboxpaper upload
-```
-
-update paper
-
-```
 $ cat README.md | dboxpaper upload XXXXXXXXXXX
 ```
 
-delete paper
+delete paper (`.paper` files are moved to trash, legacy docs are deleted permanently)
 
 ```
+$ dboxpaper delete /todo.paper
 $ dboxpaper delete XXXXXXXXXXX
 ```
 

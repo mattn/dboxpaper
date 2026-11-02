@@ -9,15 +9,19 @@ import (
 
 func init() {
 	command := &cli.Command{
-		Name:    "cat",
-		Aliases: []string{},
-		Usage:   "Cat paper",
+		Name:      "cat",
+		Aliases:   []string{},
+		Usage:     "Cat paper",
+		ArgsUsage: "<doc_id or /path/to/file.paper>",
 		Action: func(c *cli.Context) error {
 			if !c.Args().Present() {
 				cli.ShowCommandHelp(c, "cat")
 				return nil
 			}
 			dboxpaper := app.Metadata["dboxpaper"].(*DboxPaper)
+			if isFilePath(c.Args().First()) {
+				return dboxpaper.exportPaperFile(context.Background(), c.Args().First(), c.App.Writer)
+			}
 			return dboxpaper.doAPI(
 				context.Background(),
 				http.MethodPost,
