@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
@@ -63,8 +62,6 @@ type FolderInfo struct {
 	} `json:"folders"`
 }
 
-type config map[string]string
-
 var (
 	app = cli.NewApp()
 )
@@ -89,8 +86,9 @@ func (dboxpaper *DboxPaper) doAPI(ctx context.Context, method string, path strin
 	if err := dboxpaper.authorize(ctx); err != nil {
 		return err
 	}
-	dboxpaper.uri.Path = path
-	req, err := http.NewRequestWithContext(ctx, method, dboxpaper.uri.String(), request.in)
+	u := *dboxpaper.uri
+	u.Path = path
+	req, err := http.NewRequestWithContext(ctx, method, u.String(), request.in)
 	if err != nil {
 		return err
 	}
@@ -114,7 +112,7 @@ func (dboxpaper *DboxPaper) doAPI(ctx context.Context, method string, path strin
 	}
 
 	if resp.StatusCode >= 400 {
-		b, err := ioutil.ReadAll(r)
+		b, err := io.ReadAll(r)
 		if err != nil {
 			return err
 		}
@@ -127,7 +125,7 @@ func (dboxpaper *DboxPaper) doAPI(ctx context.Context, method string, path strin
 	if request.out != nil {
 		_, err = io.Copy(request.out, r)
 	} else {
-		_, err = io.Copy(ioutil.Discard, r)
+		_, err = io.Copy(io.Discard, r)
 	}
 	return err
 }
@@ -206,7 +204,7 @@ func (dboxpaper *DboxPaper) Setup() error {
 	}
 	dboxpaper.file = filepath.Join(dir, "settings.json")
 
-	b, err := ioutil.ReadFile(dboxpaper.file)
+	b, err := os.ReadFile(dboxpaper.file)
 	if err != nil {
 		return err
 	}
@@ -223,7 +221,7 @@ func (dboxpaper *DboxPaper) saveToken() error {
 	if err != nil {
 		return fmt.Errorf("failed to store file: %v", err)
 	}
-	if err := ioutil.WriteFile(dboxpaper.file, b, 0600); err != nil {
+	if err := os.WriteFile(dboxpaper.file, b, 0600); err != nil {
 		return fmt.Errorf("failed to store file: %v", err)
 	}
 	// WriteFile does not change the mode of an existing file.
@@ -344,7 +342,6 @@ func main() {
 	}
 	app.EnableBashCompletion = true
 	app.Before = initialize
-	app.Setup()
 	if err := app.Run(os.Args); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

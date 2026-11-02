@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
@@ -25,7 +25,7 @@ func TestCmdUploadCreate(t *testing.T) {
 				if _, ok := v["doc_id"]; ok {
 					t.Fatal("bad request")
 				}
-				b, err := ioutil.ReadAll(r.Body)
+				b, err := io.ReadAll(r.Body)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -77,7 +77,7 @@ func TestCmdUploadUpdate(t *testing.T) {
 				if int64(v["revision"].(float64)) != 123 {
 					t.Fatal("bad request")
 				}
-				b, err := ioutil.ReadAll(r.Body)
+				b, err := io.ReadAll(r.Body)
 				if err != nil {
 					t.Fatal(err)
 				}

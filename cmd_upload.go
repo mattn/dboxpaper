@@ -19,11 +19,6 @@ func init() {
 		Action: func(c *cli.Context) error {
 			stdin := app.Metadata["stdin"].(io.Reader)
 			dboxpaper := app.Metadata["dboxpaper"].(*DboxPaper)
-			var buf bytes.Buffer
-			err := json.NewEncoder(&buf).Encode(map[string]string{"doc_id": c.Args().First(), "export_format": "markdown"})
-			if err != nil {
-				return err
-			}
 			path := "/2/paper/docs/create"
 			arg := map[string]interface{}{"import_format": "markdown"}
 			if c.Args().Present() {
@@ -38,7 +33,7 @@ func init() {
 				arg["revision"] = docmeta.Revision
 			}
 			var out bytes.Buffer
-			err = dboxpaper.doAPI(
+			err := dboxpaper.doAPI(
 				context.Background(),
 				http.MethodPost,
 				path,
