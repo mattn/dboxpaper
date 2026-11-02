@@ -30,25 +30,7 @@ func init() {
 				path = "/2/paper/docs/update"
 				arg["doc_id"] = c.Args().First()
 
-				var in, out bytes.Buffer
-				err = json.NewEncoder(&in).Encode(map[string]interface{}{"doc_id": arg["doc_id"]})
-				if err != nil {
-					return err
-				}
-				err = dboxpaper.doAPI(
-					context.Background(),
-					http.MethodPost,
-					"/2/paper/docs/get_metadata",
-					&request{
-						ct:  "application/json",
-						in:  &in,
-						out: &out,
-					})
-				if err != nil {
-					return err
-				}
-				var docmeta DocsMeta
-				err = json.NewDecoder(&out).Decode(&docmeta)
+				docmeta, _, err := dboxpaper.getMetadata(context.Background(), c.Args().First())
 				if err != nil {
 					return err
 				}
