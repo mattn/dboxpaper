@@ -68,22 +68,34 @@ func (dboxpaper *DboxPaper) paperAsFiles(ctx context.Context) (bool, error) {
 	return false, nil
 }
 
-// listPaperFiles returns all .paper files in the account.
+// listPaperFiles returns all .paper files in the account. It uses the search
+// API since walking the whole Dropbox with list_folder is too slow.
 func (dboxpaper *DboxPaper) listPaperFiles(ctx context.Context) ([]FileMeta, []json.RawMessage, error) {
 	var files []FileMeta
 	var raws []json.RawMessage
-	path := "/2/files/list_folder"
-	var arg interface{} = map[string]interface{}{"path": "", "recursive": true}
+	path := "/2/files/search_v2"
+	var arg interface{} = map[string]interface{}{
+		"query": ".paper",
+		"options": map[string]interface{}{
+			"file_categories": []string{"paper"},
+			"max_results":     1000,
+		},
+	}
 	for {
 		var res struct {
-			Entries []json.RawMessage `json:"entries"`
-			Cursor  string            `json:"cursor"`
-			HasMore bool              `json:"has_more"`
+			Matches []struct {
+				Metadata struct {
+					Metadata json.RawMessage `json:"metadata"`
+				} `json:"metadata"`
+			} `json:"matches"`
+			Cursor  string `json:"cursor"`
+			HasMore bool   `json:"has_more"`
 		}
 		if err := dboxpaper.rpc(ctx, path, arg, &res); err != nil {
 			return nil, nil, err
 		}
-		for _, raw := range res.Entries {
+		for _, m := range res.Matches {
+			raw := m.Metadata.Metadata
 			var f FileMeta
 			if err := json.Unmarshal(raw, &f); err != nil {
 				return nil, nil, err
@@ -96,7 +108,7 @@ func (dboxpaper *DboxPaper) listPaperFiles(ctx context.Context) ([]FileMeta, []j
 		if !res.HasMore {
 			return files, raws, nil
 		}
-		path = "/2/files/list_folder/continue"
+		path = "/2/files/search/continue_v2"
 		arg = map[string]interface{}{"cursor": res.Cursor}
 	}
 }
