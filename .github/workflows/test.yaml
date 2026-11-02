@@ -16,7 +16,7 @@ jobs:
         - windows-latest
     steps:
     - name: setup go
-      uses: actions/setup-go@v3
+      uses: actions/setup-go@v6
       with:
         go-version: 1.x
     - name: Set git to use LF
@@ -25,6 +25,6 @@ jobs:
         git config --global core.eol lf
       if: "matrix.os == 'windows-latest'"
     - name: checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v5
     - name: test
       run: go test
