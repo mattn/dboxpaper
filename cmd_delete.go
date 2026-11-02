@@ -1,10 +1,7 @@
 package main
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"net/http"
 
 	"github.com/urfave/cli/v2"
 )
@@ -20,19 +17,11 @@ func init() {
 				return nil
 			}
 			dboxpaper := app.Metadata["dboxpaper"].(*DboxPaper)
-			var in bytes.Buffer
-			err := json.NewEncoder(&in).Encode(map[string]interface{}{"doc_id": c.Args().First()})
-			if err != nil {
-				return err
-			}
-			return dboxpaper.doAPI(
+			return dboxpaper.rpc(
 				context.Background(),
-				http.MethodPost,
 				"/2/paper/docs/permanently_delete",
-				&request{
-					ct: "application/json",
-					in: &in,
-				})
+				map[string]interface{}{"doc_id": c.Args().First()},
+				nil)
 		},
 	}
 	command.BashComplete = docIDCompletion
