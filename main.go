@@ -86,15 +86,15 @@ type request struct {
 }
 
 func (dboxpaper *DboxPaper) doAPI(ctx context.Context, method string, path string, request *request) error {
+	if err := dboxpaper.authorize(ctx); err != nil {
+		return err
+	}
 	dboxpaper.uri.Path = path
 	req, err := http.NewRequestWithContext(ctx, method, dboxpaper.uri.String(), request.in)
 	if err != nil {
 		return err
 	}
 	req.Header.Add("Content-Type", request.ct)
-	if dboxpaper.token != nil {
-		req.Header.Add("Authorization", "Bearer "+dboxpaper.token.AccessToken)
-	}
 	if request.arg != nil {
 		b, err := json.Marshal(request.arg)
 		if err != nil {
@@ -102,13 +102,7 @@ func (dboxpaper *DboxPaper) doAPI(ctx context.Context, method string, path strin
 		}
 		req.Header.Add("Dropbox-API-Arg", string(b))
 	}
-	var client *http.Client
-	if dboxpaper.token == nil {
-		client = http.DefaultClient
-	} else {
-		client = dboxpaper.config.Client(ctx, dboxpaper.token)
-	}
-	resp, err := client.Do(req)
+	resp, err := dboxpaper.httpClient(ctx).Do(req)
 	if err != nil {
 		return err
 	}
@@ -138,17 +132,74 @@ func (dboxpaper *DboxPaper) doAPI(ctx context.Context, method string, path strin
 	return err
 }
 
+// needsLogin reports whether the OAuth flow must be run before calling the API.
+func (dboxpaper *DboxPaper) needsLogin() bool {
+	if dboxpaper.config == nil {
+		return false
+	}
+	t := dboxpaper.token
+	return t == nil || (!t.Valid() && t.RefreshToken == "")
+}
+
+func (dboxpaper *DboxPaper) authorize(ctx context.Context) error {
+	if !dboxpaper.needsLogin() {
+		return nil
+	}
+	if err := dboxpaper.AccessToken(ctx); err != nil {
+		return fmt.Errorf("failed to get access token: %v", err)
+	}
+	return nil
+}
+
+func (dboxpaper *DboxPaper) httpClient(ctx context.Context) *http.Client {
+	if dboxpaper.config == nil || dboxpaper.token == nil {
+		return http.DefaultClient
+	}
+	return oauth2.NewClient(ctx, &savingTokenSource{
+		dboxpaper: dboxpaper,
+		src:       dboxpaper.config.TokenSource(ctx, dboxpaper.token),
+	})
+}
+
+// savingTokenSource stores the token to the settings file when it is refreshed.
+type savingTokenSource struct {
+	dboxpaper *DboxPaper
+	src       oauth2.TokenSource
+}
+
+func (s *savingTokenSource) Token() (*oauth2.Token, error) {
+	t, err := s.src.Token()
+	if err != nil {
+		return nil, err
+	}
+	if t.AccessToken != s.dboxpaper.token.AccessToken {
+		s.dboxpaper.token = t
+		if err := s.dboxpaper.saveToken(); err != nil {
+			return nil, err
+		}
+	}
+	return t, nil
+}
+
+func configDir() (string, error) {
+	if home := os.Getenv("HOME"); home != "" {
+		return filepath.Join(home, ".config", name), nil
+	}
+	if runtime.GOOS == "windows" {
+		dir, err := os.UserConfigDir()
+		if err != nil {
+			return "", err
+		}
+		return filepath.Join(dir, name), nil
+	}
+	return "", errors.New("$HOME is not defined")
+}
+
 // Setup is API to setup application
 func (dboxpaper *DboxPaper) Setup() error {
-	dir := os.Getenv("HOME")
-	if dir == "" && runtime.GOOS == "windows" {
-		dir = os.Getenv("APPDATA")
-		if dir == "" {
-			dir = filepath.Join(os.Getenv("USERPROFILE"), "Application Data", "dboxpaper")
-		}
-		dir = filepath.Join(dir, "dboxpaper")
-	} else {
-		dir = filepath.Join(dir, ".config", "dboxpaper")
+	dir, err := configDir()
+	if err != nil {
+		return err
 	}
 	if err := os.MkdirAll(dir, 0700); err != nil {
 		return err
@@ -167,55 +218,92 @@ func (dboxpaper *DboxPaper) Setup() error {
 	return nil
 }
 
+func (dboxpaper *DboxPaper) saveToken() error {
+	b, err := json.MarshalIndent(dboxpaper.token, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to store file: %v", err)
+	}
+	if err := ioutil.WriteFile(dboxpaper.file, b, 0600); err != nil {
+		return fmt.Errorf("failed to store file: %v", err)
+	}
+	// WriteFile does not change the mode of an existing file.
+	if err := os.Chmod(dboxpaper.file, 0600); err != nil {
+		return fmt.Errorf("failed to store file: %v", err)
+	}
+	return nil
+}
+
 // AccessToken is API to get access token
-func (dboxpaper *DboxPaper) AccessToken() error {
+func (dboxpaper *DboxPaper) AccessToken(ctx context.Context) error {
 	l, err := net.Listen("tcp", "localhost:8989")
 	if err != nil {
 		return err
 	}
-	defer l.Close()
 
 	stateBytes := make([]byte, 16)
 	_, err = rand.Read(stateBytes)
 	if err != nil {
 		return err
 	}
-
 	state := fmt.Sprintf("%x", stateBytes)
+	verifier := oauth2.GenerateVerifier()
 
-	uri := dboxpaper.config.AuthCodeURL(state, oauth2.SetAuthURLParam("response_type", "code"))
+	uri := dboxpaper.config.AuthCodeURL(state,
+		oauth2.S256ChallengeOption(verifier),
+		oauth2.SetAuthURLParam("token_access_type", "offline"))
 	fmt.Fprintf(os.Stderr, "opening browser: %s\n", uri)
-	err = open.Start(uri)
-	if err != nil {
-		return err
+	if err := open.Start(uri); err != nil {
+		fmt.Fprintf(os.Stderr, "failed to open browser, please open the URL above manually: %v\n", err)
 	}
 
-	quit := make(chan string)
-	go http.Serve(l, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		code := req.URL.Query().Get("code")
-		if code == "" {
-			w.Write([]byte(`<script>document.write(location.hash)</script>`))
-		} else {
-			w.Write([]byte(`<script>window.open("about:blank","_self").close()</script>`))
-		}
-		w.(http.Flusher).Flush()
-		quit <- code
-	}))
+	type result struct {
+		code string
+		err  error
+	}
+	ch := make(chan result, 1)
+	srv := &http.Server{
+		Handler: http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			q := req.URL.Query()
+			if req.URL.Path != "/" || q.Get("state") != state {
+				http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+				return
+			}
+			var res result
+			if e := q.Get("error"); e != "" {
+				res.err = fmt.Errorf("%s: %s", e, q.Get("error_description"))
+			} else if res.code = q.Get("code"); res.code == "" {
+				res.err = errors.New("authorization code is missing")
+			}
+			if res.err != nil {
+				http.Error(w, res.err.Error(), http.StatusBadRequest)
+			} else {
+				fmt.Fprintln(w, "Authorized. You can close this window.")
+			}
+			select {
+			case ch <- res:
+			default:
+			}
+		}),
+	}
+	go srv.Serve(l)
+	defer srv.Close()
 
-	dboxpaper.token, err = dboxpaper.config.Exchange(context.Background(), <-quit)
+	var res result
+	select {
+	case res = <-ch:
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+	if res.err != nil {
+		return res.err
+	}
+
+	token, err := dboxpaper.config.Exchange(ctx, res.code, oauth2.VerifierOption(verifier))
 	if err != nil {
 		return fmt.Errorf("failed to exchange access-token: %v", err)
 	}
-
-	b, err := json.MarshalIndent(dboxpaper.token, "", "  ")
-	if err != nil {
-		return fmt.Errorf("failed to store file: %v", err)
-	}
-	err = ioutil.WriteFile(dboxpaper.file, b, 0700)
-	if err != nil {
-		return fmt.Errorf("failed to store file: %v", err)
-	}
-	return nil
+	dboxpaper.token = token
+	return dboxpaper.saveToken()
 }
 
 func initialize(c *cli.Context) error {
@@ -234,13 +322,6 @@ func initialize(c *cli.Context) error {
 	err := dboxpaper.Setup()
 	if err != nil && !os.IsNotExist(err) {
 		return fmt.Errorf("failed to get configuration: %v", err)
-	}
-
-	if dboxpaper.token == nil || dboxpaper.token.AccessToken == "" {
-		err = dboxpaper.AccessToken()
-		if err != nil {
-			return fmt.Errorf("faild to get access token: %v", err)
-		}
 	}
 
 	dboxpaper.uri, _ = url.Parse("https://api.dropboxapi.com")
