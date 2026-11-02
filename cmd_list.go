@@ -19,6 +19,9 @@ func init() {
 		Action: func(c *cli.Context) error {
 			dboxpaper := app.Metadata["dboxpaper"].(*DboxPaper)
 			docIds, err := listDocs(c)
+			if err != nil {
+				return err
+			}
 			if c.Bool("title") {
 				for _, item := range docIds {
 					var in, out bytes.Buffer
@@ -36,6 +39,7 @@ func init() {
 							out: &out,
 						})
 					if err != nil {
+						fmt.Fprintf(c.App.ErrWriter, "%s: %v\n", item, err)
 						continue
 					}
 					var docmeta DocsMeta
@@ -54,7 +58,7 @@ func init() {
 					if err != nil {
 						return err
 					}
-					if dboxpaper.doAPI(
+					err = dboxpaper.doAPI(
 						context.Background(),
 						http.MethodPost,
 						"/2/paper/docs/get_metadata",
@@ -62,7 +66,9 @@ func init() {
 							ct:  "application/json",
 							in:  &in,
 							out: &out,
-						}) != nil {
+						})
+					if err != nil {
+						fmt.Fprintf(c.App.ErrWriter, "%s: %v\n", item, err)
 						continue
 					}
 					if n > 0 {

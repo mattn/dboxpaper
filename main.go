@@ -79,20 +79,18 @@ type DboxPaper struct {
 }
 
 type request struct {
-	ct   string
-	arg  map[string]interface{}
-	meta map[string]interface{}
-	in   io.Reader
-	out  io.Writer
+	ct  string
+	arg map[string]interface{}
+	in  io.Reader
+	out io.Writer
 }
 
 func (dboxpaper *DboxPaper) doAPI(ctx context.Context, method string, path string, request *request) error {
 	dboxpaper.uri.Path = path
-	req, err := http.NewRequest(method, dboxpaper.uri.String(), request.in)
+	req, err := http.NewRequestWithContext(ctx, method, dboxpaper.uri.String(), request.in)
 	if err != nil {
 		return err
 	}
-	req.WithContext(ctx)
 	req.Header.Add("Content-Type", request.ct)
 	if dboxpaper.token != nil {
 		req.Header.Add("Authorization", "Bearer "+dboxpaper.token.AccessToken)
@@ -132,20 +130,8 @@ func (dboxpaper *DboxPaper) doAPI(ctx context.Context, method string, path strin
 		return errors.New(string(b))
 	}
 
-	if request.meta != nil {
-		apires := resp.Header.Get("Dropbox-Api-Result")
-		err = json.Unmarshal([]byte(apires), request.meta)
-		if err != nil {
-			return err
-		}
-	}
-
 	if request.out != nil {
-		if w, ok := request.out.(io.Writer); ok {
-			_, err = io.Copy(w, r)
-		} else {
-			err = json.NewDecoder(r).Decode(request.out)
-		}
+		_, err = io.Copy(request.out, r)
 	} else {
 		_, err = io.Copy(ioutil.Discard, r)
 	}
@@ -278,5 +264,8 @@ func main() {
 	app.EnableBashCompletion = true
 	app.Before = initialize
 	app.Setup()
-	app.Run(os.Args)
+	if err := app.Run(os.Args); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
 }
