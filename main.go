@@ -13,7 +13,9 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"time"
+	"unicode/utf16"
 
 	"golang.org/x/oauth2"
 
@@ -82,6 +84,26 @@ type request struct {
 	out io.Writer
 }
 
+// apiArg encodes v as JSON for the Dropbox-API-Arg header. HTTP headers must be
+// ASCII, so non-ASCII characters are escaped as \uXXXX.
+func apiArg(v interface{}) (string, error) {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return "", err
+	}
+	var sb strings.Builder
+	for _, r := range string(b) {
+		if r < 0x7f {
+			sb.WriteRune(r)
+			continue
+		}
+		for _, c := range utf16.Encode([]rune{r}) {
+			fmt.Fprintf(&sb, "\\u%04x", c)
+		}
+	}
+	return sb.String(), nil
+}
+
 func (dboxpaper *DboxPaper) doAPI(ctx context.Context, method string, path string, request *request) error {
 	if err := dboxpaper.authorize(ctx); err != nil {
 		return err
@@ -94,11 +116,11 @@ func (dboxpaper *DboxPaper) doAPI(ctx context.Context, method string, path strin
 	}
 	req.Header.Add("Content-Type", request.ct)
 	if request.arg != nil {
-		b, err := json.Marshal(request.arg)
+		arg, err := apiArg(request.arg)
 		if err != nil {
 			return err
 		}
-		req.Header.Add("Dropbox-API-Arg", string(b))
+		req.Header.Add("Dropbox-API-Arg", arg)
 	}
 	resp, err := dboxpaper.httpClient(ctx).Do(req)
 	if err != nil {
