@@ -42,23 +42,23 @@ func (f *fakeFiles) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Path {
 	case "/2/users/features/get_values":
 		fmt.Fprintln(w, `{"values":[{".tag":"paper_as_files","paper_as_files":{".tag":"enabled","enabled":true}}]}`)
-	case "/2/files/list_folder":
+	case "/2/files/search_v2":
 		v := f.arg(r)
-		if v["path"] != "" || v["recursive"] != true {
-			f.t.Errorf("bad list_folder argument: %v", v)
+		opts, _ := v["options"].(map[string]interface{})
+		if v["query"] == "" || opts == nil || fmt.Sprint(opts["file_categories"]) != "[paper]" {
+			f.t.Errorf("bad search_v2 argument: %v", v)
 		}
-		fmt.Fprintln(w, `{"entries":[
-			{".tag":"folder","name":"Migrated Paper Docs","path_display":"/Migrated Paper Docs"},
-			{".tag":"file","name":"メモ.paper","id":"id:a","path_display":"/Migrated Paper Docs/メモ.paper"},
-			{".tag":"file","name":"photo.jpg","id":"id:b","path_display":"/photo.jpg"}
+		fmt.Fprintln(w, `{"matches":[
+			{"metadata":{".tag":"metadata","metadata":{".tag":"file","name":"メモ.paper","id":"id:a","path_display":"/Migrated Paper Docs/メモ.paper"}}},
+			{"metadata":{".tag":"metadata","metadata":{".tag":"file","name":"photo.paper.jpg","id":"id:b","path_display":"/photo.paper.jpg"}}}
 		],"cursor":"c1","has_more":true}`)
-	case "/2/files/list_folder/continue":
+	case "/2/files/search/continue_v2":
 		if v := f.arg(r); v["cursor"] != "c1" {
 			f.t.Errorf("bad cursor: %v", v)
 		}
-		fmt.Fprintln(w, `{"entries":[
-			{".tag":"file","name":"todo.paper","id":"id:c","path_display":"/todo.paper"}
-		],"cursor":"c2","has_more":false}`)
+		fmt.Fprintln(w, `{"matches":[
+			{"metadata":{".tag":"metadata","metadata":{".tag":"file","name":"todo.paper","id":"id:c","path_display":"/todo.paper"}}}
+		],"has_more":false}`)
 	case "/2/files/export":
 		v := f.arg(r)
 		if v["export_format"] != "markdown" {
